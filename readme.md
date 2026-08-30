@@ -1,6 +1,6 @@
-# car2
+# bxi_car
 
-`car2` 是一个 ROS 2 差速轮底盘控制示例工程，包含底盘电机控制、升降柱 Modbus 控制、手柄遥控节点，以及 BXI PCI/CAN-FD 驱动测试代码。
+`bxi_car` 是一个 ROS 2 差速轮底盘控制示例工程，包含底盘电机控制、升降柱 Modbus 控制、手柄遥控节点，以及 BXI PCI/CAN-FD 驱动测试代码。
 
 ## 目录结构
 
