@@ -1,0 +1,22 @@
+[Unit]
+Description=Car2 external HiPNUC IMU publisher
+After=network.target
+
+[Service]
+Type=simple
+User=bxi
+WorkingDirectory=/home/bxi/tang/car2
+# Set this to the serial matched by 99-car2-imu.rules.
+Environment=CAR2_IMU_USB_SERIAL=
+Environment=ROS_DOMAIN_ID=22
+Environment=RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
+Environment=ROS_LOCALHOST_ONLY=0
+Environment='CYCLONEDDS_URI=<CycloneDDS><Domain Id="any"><General><Interfaces><NetworkInterface name="lo" multicast="true"/></Interfaces><AllowMulticast>true</AllowMulticast></General></Domain></CycloneDDS>'
+ExecStart=/bin/bash -c 'source /opt/ros/humble/setup.bash && exec /usr/bin/python3 /home/bxi/tang/car2/tools/hipnuc_imu.py'
+Restart=on-failure
+RestartSec=3
+KillSignal=SIGINT
+TimeoutStopSec=10s
+
+[Install]
+WantedBy=multi-user.target

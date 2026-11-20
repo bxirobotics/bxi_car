@@ -1,0 +1,2 @@
+# Replace YOUR_IMU_USB_SERIAL with the serial of the external IMU adapter.
+ACTION=="add|change", SUBSYSTEM=="tty", KERNEL=="ttyUSB[0-9]*", ATTRS{serial}=="YOUR_IMU_USB_SERIAL", OWNER:="bxi", MODE:="0660", SYMLINK+="ttyIMU"

@@ -1,0 +1,35 @@
+# 日常调参：修改后重启程序生效。x 向前，y 向左，yaw 逆时针。
+# 轮速、整车限速和遥控速度共同限制最终速度；增大遥控速度不会越过轮速上限。
+chassis:
+  ros__parameters:
+    # 同目录硬件配置：CAN、机械尺寸、方向、校准、驱动器内部参数。
+    hardware_config_file: steering_hardware.yaml
+
+    # 四个行走轮统一设置（输出轴 RPM；轮缘加减速度 m/s²）。
+    # 3 为 PV；-3 为立即速度模式，普通加减速由底盘控制器的软件斜坡执行。
+    drive_velocity_mode: -3
+    # 直径 0.13 m 的车轮：146.91 RPM 对应约 1.0 m/s，斜向行驶也受轮速限制。
+    drive_max_output_rpm: 146.91
+    drive_acceleration_m_s2: 2.0
+    drive_deceleration_m_s2: 2.0
+
+    # 舵轮转向角速度 rad/s；整车 yaw 变化率 rad/s²。
+    steering_rate_limit_rad_s: 4.0
+    command_yaw_acceleration_rad_s2: 4
+
+    # 整车 x/y/yaw 速度绝对值上限，适用于遥控和 /cmd_vel_car。
+    # 0 保持原行为（仅受轮速限制）；设为正数启用，例如 0.6、0.6、0.4。
+    # 任一方向超限时，x/y/yaw 同比例缩小，保持运动方向与转弯比例。
+    max_velocity_x_m_s: 1.0
+    max_velocity_y_m_s: 1.0
+    max_velocity_yaw_rad_s: 0.0
+
+remote_ctrl:
+  ros__parameters:
+    # 遥控满杆 x/y 速度 m/s、yaw 角速度 rad/s。
+    scale_linear: 1.0
+    scale_lateral: 1.0
+    scale_angular: 1.0
+    # 遥控 x/y 指令变化率 m/s²，沿用现有算法：正向变化 / 负向变化。
+    max_accel: 2.0
+    max_decel: 2.0

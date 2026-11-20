@@ -1,0 +1,42 @@
+# 工控机上的意优 EtherCAT 实体网口；允许配置 IP，lo 不是实体网口。
+# 含机械臂的主程序默认加载本文件；--params-file 和 -p 可覆盖参数。
+chassis:
+  ros__parameters:
+    yiyou_ethercat_interface: "enp86s0"
+    # 品全微继电器：CAN6 / 1M，地址1，Y2气泵；button7/RB每按一次切换。
+    relay_enabled: true
+    relay_address: 1
+    relay_output_channel: 2
+    relay_active_high: true
+    # 三轴 PP；只选择实际连接的 1/2/3 站。
+    yiyou_ethercat_slaves: [1, 2, 3]
+    # 以下第四轴参数仅在站位列表包含第四项时生效：button0/button4 正反点动。
+    # 输出轴 12 RPM = 72 度/秒；目标限制 0..1200 度，越界时仅允许向内返回。
+    yiyou_motor_4_speed_rpm: 12.0
+    yiyou_motor_4_acceleration_rpm_s: 24.0
+    # 第四轴多圈角度记录默认在工程 state/yiyou_motor4_position.yaml，调试工具共用。
+    # 可用非空绝对路径参数 yiyou_motor_4_position_memory_file 覆盖；断电期间轴必须不动。
+    # 前三轴依次为肩、肘、腕；编码器 0 对应校准关节 q=[0,0,0]。
+    # 正关节角绕 -Y；按实机安装核对电机正方向，反向轴填 -1。
+    yiyou_arm_motor_directions: [1, -1, 1]
+    yiyou_arm_zero_counts: [0, 0, 0]
+    # 第二轴相对已保存零位的关节限位为 [-330°,0°]，由下方运动学模型给出。
+    # Gemini 335 静态调平后，显式加载本机 JSON；连杆仍为 300/400 mm。
+    # q=0 的 +X 绝对角约 [160,125.31,97.741595]°，相邻偏置 [160,-34.69,-27.568405]°。
+    # 几何偏置不叠加到电机零位计数，关节正方向仍绕 -Y。
+    # 随包模型从当前配置目录加载，OTA 使用 CHASSIS_CONFIG_DIR 指定的目录。
+    yiyou_arm_kinematics_file: "package://chassis/config/arm_kinematics.json"
+    yiyou_arm_speed_rpm: 0.6
+    yiyou_arm_acceleration_rpm_s: 1.0
+    # 每次控制程序上电初始化后，按校准关节角回位；不设零或写 EEPROM。
+    # 设为 false 时保持启动位置。回位到位后才校准底盘并开放遥控。
+    yiyou_arm_home_on_start: true
+    # 相对已保存零位的关节角，单位度；不是连杆相对水平面的角度。
+    # 第一段从 -X 向上 30°，第二段朝 +X 水平；镜头水平朝前，对应模型工具 pitch=90°。
+    yiyou_arm_home_joint_degrees: [-10.0, -115.31, 117.56840515136719]
+    # 运行后设置 yiyou_arm_target=[x米,z米,pitch弧度]。
+
+remote_ctrl:
+  ros__parameters:
+    arm_position_topic: "/arm_motor4_jog"
+    relay_enabled: true

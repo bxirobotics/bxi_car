@@ -1,0 +1,64 @@
+#pragma once
+
+#include "bxi_pci_drv.h"
+#include "iswv/transport.hpp"
+
+#include <atomic>
+#include <array>
+#include <cstddef>
+#include <cstdint>
+#include <mutex>
+
+namespace chassis
+{
+
+// BXI 板卡：管理一条 CAN 通道和共享电机电源；不包含任何电机型号协议。
+// 构造打开板卡，set_motor_power 显式上下电；最后一个通道析构时关闭共享电源。
+// 电机和控制器应先于板卡析构，以便在通信仍可用时发送停车/失能指令。
+class BxiPciTransport final : public iswv::ICanTransport
+{
+public:
+  explicit BxiPciTransport(unsigned int bus, bool trace = false);
+  ~BxiPciTransport() override;
+
+  BxiPciTransport(const BxiPciTransport &) = delete;
+  BxiPciTransport & operator=(const BxiPciTransport &) = delete;
+
+  iswv::Result<void> send(const iswv::CanFrame & frame) override;
+  void set_receive_handler(iswv::ReceiveHandler handler) override;
+  void set_error_handler(iswv::TransportErrorHandler handler) override;
+  bool is_open() const noexcept override;
+  std::string name() const override;
+
+  iswv::Result<void> set_motor_power(bool enabled);
+
+  // The vendor poll thread survives bxi_pci_exit(). A new hardware session
+  // therefore needs a new process, even if initialization only partly succeeded.
+  static bool runtime_used() noexcept;
+  static bool runtime_cleanup_failed() noexcept;
+
+  static iswv::Result<canfd_packet> packet_from_frame(
+    unsigned int bus, const iswv::CanFrame & frame);
+  static iswv::Result<iswv::CanFrame> frame_from_packet(
+    const canfd_packet & packet);
+
+private:
+  static int receive_callback(void * context, canfd_packet * packet);
+  void receive(const canfd_packet & packet);
+  void report_error(iswv::Error error);
+
+  static std::mutex registry_mutex_;
+  static std::array<BxiPciTransport *, CANFD_DEVICE_NUM> transports_;
+  static std::size_t transport_count_;
+  static std::atomic<bool> runtime_used_;
+  static std::atomic<bool> runtime_cleanup_failed_;
+
+  const unsigned int bus_;
+  const bool trace_;
+  std::atomic<bool> open_{false};
+  mutable std::mutex handler_mutex_;
+  iswv::ReceiveHandler receive_handler_;
+  iswv::TransportErrorHandler error_handler_;
+};
+
+}  // namespace chassis
